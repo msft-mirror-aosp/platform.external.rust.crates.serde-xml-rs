@@ -13,7 +13,7 @@ rust_library {
         "liblog_rust",
         "libserde",
         "libthiserror",
-        "libxml",
+        "libxml_rust",
     ],
     apex_available: [
         "//apex_available:platform",
