@@ -5,6 +5,7 @@
 
 rust_library {
     name: "libserde_xml_rs",
+    // has rustc warnings
     host_supported: true,
     crate_name: "serde_xml_rs",
     srcs: ["src/lib.rs"],
@@ -21,14 +22,63 @@ rust_library {
     ],
 }
 
-// dependent_library ["feature_list"]
-//   cfg-if-1.0.0
-//   log-0.4.14 "std"
-//   proc-macro2-1.0.27 "default,proc-macro"
-//   quote-1.0.9 "default,proc-macro"
-//   serde-1.0.126 "default,std"
-//   syn-1.0.73 "clone-impls,default,derive,parsing,printing,proc-macro,quote"
-//   thiserror-1.0.26
-//   thiserror-impl-1.0.26
-//   unicode-xid-0.2.2 "default"
-//   xml-rs-0.8.3
+rust_defaults {
+    name: "serde-xml-rs_test_defaults",
+    crate_name: "serde_xml_rs",
+    // has rustc warnings
+    srcs: ["src/lib.rs"],
+    test_suites: ["general-tests"],
+    auto_gen_config: true,
+    edition: "2015",
+    rustlibs: [
+        "liblog_rust",
+        "libserde",
+        "libthiserror",
+        "libxml_rust",
+    ],
+    proc_macros: ["libserde_derive"],
+}
+
+rust_test_host {
+    name: "serde-xml-rs_host_test_src_lib",
+    defaults: ["serde-xml-rs_test_defaults"],
+    test_options: {
+        unit_test: true,
+    },
+}
+
+rust_test {
+    name: "serde-xml-rs_device_test_src_lib",
+    defaults: ["serde-xml-rs_test_defaults"],
+}
+
+rust_defaults {
+    name: "serde-xml-rs_test_defaults_serde_xml_rs",
+    crate_name: "serde_xml_rs",
+    // has rustc warnings
+    srcs: ["tests/round_trip.rs"],
+    test_suites: ["general-tests"],
+    auto_gen_config: true,
+    edition: "2015",
+    rustlibs: [
+        "liblog_rust",
+        "libserde",
+        "libserde_xml_rs",
+        "libthiserror",
+        "libxml_rust",
+    ],
+    proc_macros: ["libserde_derive"],
+}
+
+rust_test_host {
+    name: "serde-xml-rs_host_test_tests_round_trip",
+    defaults: ["serde-xml-rs_test_defaults_serde_xml_rs"],
+    test_options: {
+        unit_test: true,
+    },
+}
+
+rust_test {
+    name: "serde-xml-rs_device_test_tests_round_trip",
+    defaults: ["serde-xml-rs_test_defaults_serde_xml_rs"],
+}
