@@ -3,7 +3,17 @@
     "//apex_available:platform",
     "com.android.virt"
   ],
-  "dependencies": true,
+  "dependency-blocklist": [
+    "docmatic",
+    "simple_logger"
+  ],
   "device": true,
+  "test-blocklist": [
+    "tests/failures.rs",
+    "tests/migrated.rs",
+    "tests/readme.rs",
+    "tests/test.rs"
+  ],
+  "tests": true,
   "run": true
 }
