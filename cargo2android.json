@@ -11,7 +11,7 @@
   "test-blocklist": [
     "tests/failures.rs",
     "tests/migrated.rs",
-    "tests/readme.rs",
+    "tests/round_trip.rs",
     "tests/test.rs"
   ],
   "tests": true,
