@@ -1,57 +1,73 @@
 use std::io::Read;
 
 use serde::de::{self, IntoDeserializer, Unexpected};
+use serde::forward_to_deserialize_any;
 use xml::attribute::OwnedAttribute;
 use xml::reader::XmlEvent;
 
-use Deserializer;
-use error::{Error, Result};
+use crate::error::{Error, Result};
+use crate::Deserializer;
 
-pub struct MapAccess<'a, R: 'a + Read> {
+use super::buffer::BufferedXmlReader;
+
+pub struct MapAccess<'a, R: Read, B: BufferedXmlReader<R>> {
     attrs: ::std::vec::IntoIter<OwnedAttribute>,
-    next_value: Option<String>,
-    de: &'a mut Deserializer<R>,
+    /// Cache of attribute value, populated when visitor calls `next_key_seed`; should be read & emptied straight after
+    /// by visitor call to `next_value_seed`
+    next_attr_value: Option<String>,
+    de: &'a mut Deserializer<R, B>,
+    /// Whether this `MapAccess` is to deserialize all inner contents of an outer element.
     inner_value: bool,
 }
 
-impl<'a, R: 'a + Read> MapAccess<'a, R> {
-    pub fn new(de: &'a mut Deserializer<R>, attrs: Vec<OwnedAttribute>, inner_value: bool) -> Self {
+impl<'a, R: 'a + Read, B: BufferedXmlReader<R>> MapAccess<'a, R, B> {
+    pub fn new(
+        de: &'a mut Deserializer<R, B>,
+        attrs: Vec<OwnedAttribute>,
+        inner_value: bool,
+    ) -> Self {
         MapAccess {
             attrs: attrs.into_iter(),
-            next_value: None,
+            next_attr_value: None,
             de: de,
             inner_value: inner_value,
         }
     }
 }
 
-impl<'de, 'a, R: 'a + Read> de::MapAccess<'de> for MapAccess<'a, R> {
+impl<'de, 'a, R: 'a + Read, B: BufferedXmlReader<R>> de::MapAccess<'de> for MapAccess<'a, R, B> {
     type Error = Error;
 
     fn next_key_seed<K: de::DeserializeSeed<'de>>(&mut self, seed: K) -> Result<Option<K::Value>> {
-        debug_assert_eq!(self.next_value, None);
+        debug_assert_eq!(self.next_attr_value, None);
         match self.attrs.next() {
+            // Read all attributes first
             Some(OwnedAttribute { name, value }) => {
-                self.next_value = Some(value);
+                self.next_attr_value = Some(value);
                 seed.deserialize(name.local_name.into_deserializer())
                     .map(Some)
-            },
+            }
             None => match *self.de.peek()? {
-                XmlEvent::StartElement { ref name, .. } => seed.deserialize(
-                    if !self.inner_value {
-                        name.local_name.as_str()
-                    } else {
-                        "$value"
-                    }.into_deserializer(),
-                ).map(Some),
+                XmlEvent::StartElement { ref name, .. } => seed
+                    .deserialize(
+                        if !self.inner_value {
+                            name.local_name.as_str()
+                        } else {
+                            "$value"
+                        }
+                        .into_deserializer(),
+                    )
+                    .map(Some),
                 XmlEvent::Characters(_) => seed.deserialize("$value".into_deserializer()).map(Some),
+                // Any other event: assume end of map values (actual check for `EndElement` done by the originating
+                // `Deserializer`)
                 _ => Ok(None),
             },
         }
     }
 
     fn next_value_seed<V: de::DeserializeSeed<'de>>(&mut self, seed: V) -> Result<V::Value> {
-        match self.next_value.take() {
+        match self.next_attr_value.take() {
             Some(value) => seed.deserialize(AttrValueDeserializer(value)),
             None => {
                 if !self.inner_value {
@@ -61,7 +77,7 @@ impl<'de, 'a, R: 'a + Read> de::MapAccess<'de> for MapAccess<'a, R> {
                 }
                 let result = seed.deserialize(&mut *self.de)?;
                 Ok(result)
-            },
+            }
         }
     }
 
@@ -77,7 +93,7 @@ macro_rules! deserialize_type_attr {
         fn $deserialize<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
             visitor.$visit(self.0.parse()?)
         }
-    }
+    };
 }
 
 impl<'de> de::Deserializer<'de> for AttrValueDeserializer {
@@ -115,7 +131,10 @@ impl<'de> de::Deserializer<'de> for AttrValueDeserializer {
         match self.0.as_str() {
             "true" | "1" => visitor.visit_bool(true),
             "false" | "0" => visitor.visit_bool(false),
-            _ => Err(de::Error::invalid_value(Unexpected::Str(&self.0), &"a boolean")),
+            _ => Err(de::Error::invalid_value(
+                Unexpected::Str(&self.0),
+                &"a boolean",
+            )),
         }
     }
 
