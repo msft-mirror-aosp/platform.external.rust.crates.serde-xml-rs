@@ -1,17 +1,12 @@
-#[macro_use]
-extern crate serde_derive;
-extern crate serde;
-extern crate serde_xml_rs;
-
 use serde::Deserialize;
-use serde_xml_rs::{from_str, to_string, EventReader, ParserConfig};
+use serde_derive::{Deserialize, Serialize};
+use serde_xml_rs::{self, from_str, to_string, EventReader, ParserConfig};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 struct Item {
     name: String,
     source: String,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 enum Node {
@@ -25,7 +20,6 @@ struct Nodes {
     #[serde(rename = "$value")]
     items: Vec<Node>,
 }
-
 
 #[test]
 fn basic_struct() {
@@ -41,7 +35,6 @@ fn basic_struct() {
     let reserialized_item = to_string(&item).unwrap();
     assert_eq!(src, reserialized_item);
 }
-
 
 #[test]
 #[ignore]
