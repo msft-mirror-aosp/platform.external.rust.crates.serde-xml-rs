@@ -39,15 +39,19 @@ rust_library {
     ],
 }
 
-rust_defaults {
-    name: "serde-xml-rs_test_defaults",
-    crate_name: "serde_xml_rs",
+rust_test {
+    name: "serde-xml-rs_test_src_lib",
     // has rustc warnings
-    srcs: ["src/lib.rs"],
+    host_supported: true,
+    crate_name: "serde_xml_rs",
     cargo_env_compat: true,
     cargo_pkg_version: "0.5.1",
+    srcs: ["src/lib.rs"],
     test_suites: ["general-tests"],
     auto_gen_config: true,
+    test_options: {
+        unit_test: true,
+    },
     edition: "2018",
     rustlibs: [
         "liblog_rust",
@@ -56,17 +60,4 @@ rust_defaults {
         "libxml_rust",
     ],
     proc_macros: ["libserde_derive"],
-}
-
-rust_test_host {
-    name: "serde-xml-rs_host_test_src_lib",
-    defaults: ["serde-xml-rs_test_defaults"],
-    test_options: {
-        unit_test: true,
-    },
-}
-
-rust_test {
-    name: "serde-xml-rs_device_test_src_lib",
-    defaults: ["serde-xml-rs_test_defaults"],
 }
