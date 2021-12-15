@@ -8,12 +8,12 @@
     "simple_logger"
   ],
   "device": true,
+  "run": true,
   "test-blocklist": [
     "tests/failures.rs",
     "tests/migrated.rs",
     "tests/round_trip.rs",
     "tests/test.rs"
   ],
-  "tests": true,
-  "run": true
+  "tests": true
 }
