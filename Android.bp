@@ -20,11 +20,10 @@ license {
 
 rust_library {
     name: "libserde_xml_rs",
-    // has rustc warnings
     host_supported: true,
     crate_name: "serde_xml_rs",
     cargo_env_compat: true,
-    cargo_pkg_version: "0.5.1",
+    cargo_pkg_version: "0.6.0",
     srcs: ["src/lib.rs"],
     edition: "2018",
     rustlibs: [
@@ -41,11 +40,10 @@ rust_library {
 
 rust_test {
     name: "serde-xml-rs_test_src_lib",
-    // has rustc warnings
     host_supported: true,
     crate_name: "serde_xml_rs",
     cargo_env_compat: true,
-    cargo_pkg_version: "0.5.1",
+    cargo_pkg_version: "0.6.0",
     srcs: ["src/lib.rs"],
     test_suites: ["general-tests"],
     auto_gen_config: true,
@@ -59,5 +57,4 @@ rust_test {
         "libthiserror",
         "libxml_rust",
     ],
-    proc_macros: ["libserde_derive"],
 }
